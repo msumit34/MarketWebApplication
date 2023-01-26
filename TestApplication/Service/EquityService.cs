@@ -46,10 +46,15 @@ namespace TestApplication.Service
                         tibc = await this.getTechnicalIndicatorsBarChart(symbol + "_" + date + "_TechnicalIndicatorsBarChart");
                         break;
                     default:
-                        frbc = await this.getFinancialRatiosBarChart(symbol + "_" + date + "_FinancialRatiosBarChart"); 
-                        gbc = await this.getGrowthBarChart(symbol + "_" + date + "_GrowthBarChart");
-                        rbc = await this.getRatingsBarChart(symbol + "_" + date + "_RatingsBarChart");
-                        tibc = await this.getTechnicalIndicatorsBarChart(symbol + "_" + date + "_TechnicalIndicatorsBarChart");
+                        Task<FinancialRatiosBarChart> t1 = this.getFinancialRatiosBarChart(symbol + "_" + date + "_FinancialRatiosBarChart");
+                        Task<GrowthBarChart> t2 = this.getGrowthBarChart(symbol + "_" + date + "_GrowthBarChart");
+                        Task<RatingsBarChart> t3 = this.getRatingsBarChart(symbol + "_" + date + "_RatingsBarChart");
+                        Task<TechnicalIndicatorsBarChart> t4 = this.getTechnicalIndicatorsBarChart(symbol + "_" + date + "_TechnicalIndicatorsBarChart");
+                        await Task.WhenAll(t1, t2, t3, t4);
+                        frbc = t1.Result;
+                        gbc = t2.Result;
+                        rbc = t3.Result;
+                        tibc = t4.Result;
                         break;
                 }
                 return new StockDetails(frbc, gbc, rbc, tibc);
