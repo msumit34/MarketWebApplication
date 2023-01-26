@@ -1,0 +1,350 @@
+﻿@using TestApplication.Models
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> ETL Service </title>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="app.css">
+        <link rel="stylesheet" type="text/css" href="site.css">
+        <script type="text/javascript">
+
+            function getSymbols()
+            {
+                try
+                {
+                    fetch("https://localhost:7116/etl/getsymbols")
+                        .then(res => res.json())
+                        .then(data => console.log(data)); 
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function getIndustry()
+            {
+                try
+                {
+                    fetch("https://localhost:7116/etl/etlview")
+                        .then(res => res.json())
+                        .then(data => this.etl.industry = data);
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function getSector()
+            {
+                try
+                {
+                    fetch("https://localhost:7116/etl/etlview")
+                        .then(res => res.json())
+                        .then(data => this.etl.sector = data);
+                }   
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function getCompanies()
+            {
+                try
+                {
+                    fetch("https://localhost:7116/etl/getcompanies")
+                        .then(res => res.json())
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadRatingsData()
+            {
+                try
+                {
+                    //loadToServer('https://localhost:7116/ETL/loadRatingsData', 'https://localhost:7116', "RatingsDataBtn");
+                    let data = document.getElementById("RatingsDataBtn").files[0];
+                    var reader  = new FileReader();
+                    reader.readAsText(data);
+                    reader.onload = function(e)
+                    {
+                       var fileResult = e.target.result;
+                       const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                       const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                       var technicalDataArray = rows.map(function (row) {
+                           var values = row.split(",");
+                           return values;
+                       });
+
+                        fetch('https://localhost:7116/ETL/loadRatingsData',{
+                        method:'POST',
+                        headers:{
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': 'https://localhost:7116', 
+                            'Access-Control-Allow-Credentials': 'true'
+                        },
+                        body:JSON.stringify(technicalDataArray)
+                    })
+                    .then(response => response.json())
+                    .then(response => console.log(JSON.stringify(response)));
+                    }
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadFinancialRatiosData()
+            {
+                try
+                {
+                   // loadToServer('https://localhost:7116/ETL/loadFinancialRatiosData', 'https://localhost:7116', "FinancialDataBtn");
+                    let data = document.getElementById("FinancialDataBtn").files[0];
+                    var reader  = new FileReader();
+                    reader.readAsText(data);
+                    reader.onload = function(e)
+                    {
+                       var fileResult = e.target.result;
+                       const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                       const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                       var technicalDataArray = rows.map(function (row) {
+                           var values = row.split(",");
+                           return values;
+                       });
+
+                        fetch('https://localhost:7116/ETL/loadFinancialRatiosData',{
+                        method:'POST',
+                        headers:{
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': 'https://localhost:7116', 
+                            'Access-Control-Allow-Credentials': 'true'
+                        },
+                        body:JSON.stringify(technicalDataArray)
+                    })
+                    .then(response => response.json())
+                    .then(response => console.log(JSON.stringify(response)));
+                    }
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadGrowthData()
+            {
+                try
+                {
+                    //loadToServer('https://localhost:7116/ETL/loadGrowthData', 'https://localhost:7116', "growthDataBtn");
+                    let data = document.getElementById("growthDataBtn").files[0];
+                    console.log(data);
+                    var reader  = new FileReader();
+                    reader.readAsText(data);
+                    
+                    reader.onload = function(e)
+                    {
+                       var fileResult = e.target.result;
+                       const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                       const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                       var technicalDataArray = rows.map(function (row) {
+                           var values = row.split(",");
+                           return values;
+                       });
+
+                        fetch('https://localhost:7116/ETL/loadGrowthData',{
+                        method:'POST',
+                        headers:{
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': 'https://localhost:7116', 
+                            'Access-Control-Allow-Credentials': 'true'
+                        },
+                        body:JSON.stringify(technicalDataArray)
+                    })
+                    .then(response => response.json())
+                    .then(response => console.log(JSON.stringify(response)));
+                    }
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadTechData()
+            {
+                try
+                {
+                    let data = document.forms.Barchart_ETL.elements.technicalDataBtn.files[0];
+                    var reader  = new FileReader();
+                    reader.readAsText(data);
+                    
+                    reader.onload = function(e)
+                    {
+                       var fileResult = e.target.result;
+                       const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                       const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                       var technicalDataArray = rows.map(function (row) {
+                           var values = row.split(",");
+                           return values;
+                       });
+
+                        fetch('https://localhost:7116/ETL/loadTechnicalData',{
+                        method:'POST',
+                        headers:{
+                            'Content-Type': 'application/json',
+                            'Access-Control-Allow-Origin': 'https://localhost:7116', 
+                            'Access-Control-Allow-Credentials': 'true'
+                        },
+                        body:JSON.stringify(technicalDataArray)
+                    })
+                    .then(response => response.json())
+                    .then(response => console.log(JSON.stringify(response)));
+                    }
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadSymbols()
+            {
+                try
+                {
+                    var companies_file = document.forms.loadSymbol.elements.symbolsFile.files[0];
+                    var reader = new FileReader();
+                    reader.readAsText(companies_file);
+
+                    reader.onload = function(e){
+                        var fileResult = e.target.result;
+                        const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                        const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                        var companyData = rows.map(function (row){
+                            var values = row.split(",");
+                            return values;
+                        });
+
+                    fetch('https://localhost:7116/ETL/loadSymbols', {
+                            method: 'POST', 
+                            headers:{
+                                'Content-Type':'application/json',
+                                'Access-Control-Allow-Origin':'https://localhost:7116',
+                                'Access-Control-Allow-Credentials':'true'
+                            },
+                            body: JSON.stringify(companyData)
+                        }).then( response=>response.json() );
+                    }
+                }
+                catch(e)
+                {
+                    console.log(e);
+                }
+            }
+
+            function loadEconomicData()
+            {
+                try{
+                var economicFiles = document.getElementById('economic_files').files[0];
+                var reader = new FileReader();
+                reader.readAsText(economicFiles);
+                var econDataType = document.getElementById('econDataType').value;
+                reader.onload = function(e) {
+                    var fileResult = e.target.result;
+                    const headers = fileResult.slice(0, fileResult.indexOf("\n")).split(",");
+                        const rows = fileResult.slice(fileResult.indexOf("\n")+1).split("\n");
+                        var economicData = rows.map(function (row){
+                            var values = row.split(",");
+                            return values;
+                        }); 
+                        fetch(`https://localhost:7116/ETL/EconomicData?dataType=${econDataType}`, {
+                            method: 'POST',
+                            headers:{
+                                'Content-Type': 'application/json', 
+                                'Access-Control-Allow-Origin':'https://localhost:7116', 
+                                'Access-Control-Allow-Credentials':'true'
+                        }, 
+                        body: JSON.stringify(economicData)
+                    }).then(response => response.json());
+                }
+              }
+              catch(e)
+              {
+                  console.log(e);
+              }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>ETL Service</h1>
+          <form id="Barchart_ETL">
+          <fieldset name="technical data">
+          <legend>Technical Barchart Data</legend>
+              <span class="etlelem">Upload Technical Data <input id ="technicalDataBtn" type="file" name="technicalFile"> 
+              <button id="technicalDataSubmit" type="button" onclick="loadTechData()">Upload</button></span><br>
+          </fieldset>
+          </form>
+          <br>
+          <form id="Growth ETL">
+          <fieldset name="growth data">
+                <legend>Growth Barchart Data</legend>
+                <span class="etlelem">Upload Growth Data <input id="growthDataBtn" type="file" name="growthFile">
+                <button id="growthDataSubmit" type="button" onclick="loadGrowthData()" >Upload</button></span><br>
+              </fieldset>
+         </form>
+         <br>
+         <form id="Financial ETL">
+              <fieldset name="financial data">
+                  <legend>Financial Ratios Barchart Data</legend>
+                  <span class="etlelem">Upload Financial Ratios Data <input id="FinancialDataBtn" type="file" name="financialFile">
+                  <button id="financialDataSubmit" type="button" onclick="loadFinancialRatiosData()" >Upload</button></span><br>
+              </fieldset>
+         </form>
+         <br>
+         <form id="Ratings ETL">
+              <fieldset name="ratings data">
+                  <legend>Ratings Barchart Data</legend>
+                  <span class="etlelem">Upload Ratings Data <input id="RatingsDataBtn" type="file" name="ratingsFile">
+                  <button id="ratingsDataSubmit" type="button" onclick="loadRatingsData()" >Upload</button></span><br>
+              </fieldset>
+          </form>
+          <br>
+          <form id="IEX ETL">
+             <fieldset name="iexetl">
+              <legend>IEX ETL Process:</legend>
+              <span class="etlelem">Balance Sheet Data: <button id="iexBalanceSheetBtn" formaction="" formmethod="GET">Load Balance Sheet Data</button></span><br><br>
+              <span class="etlelem">Cash Flow Statement Data: <button id="iexCashFlowStatementBtn" formaction="" formmethod="GET">Load Cash Flow Statement Data</button></span><br><br>
+              <span class="etlelem">Income Statment Data: <button id="iexIncomeStatementBtn" formaction="" formmethod="GET">Load Income Statement Data</button></span><br><br>
+              <span class="etlelem">Advanced Statistics Data: <button id="iexAdvancedStatisticsBtn" formaction="" formmethod="GET">Load Advanced Stastics Data</button><span><br><br>
+             </fieldset>
+          </form>
+          <br>
+          <form id="Economics ETL">
+              <fieldset name="trading_economics">
+              <legend>Trading Economics</legend>
+              <span class="etlelem">Economic Data: <input type="file" id="economic_files" name="economic_files"/>
+                  <button id="economic_data" name="economic_data" onclick="loadEconomicData()">Load Economic Data</button></span><br><br>
+                  <select id="econDataType" name="econDataType">
+                      <option value="GDP">GDP</option>
+                      <option value="GNP">GNP</option>
+                      <option value="Interest Rate">Interest Rate</option>
+                      <option value="Unemployment">Unemployment</option>
+                  </select>
+              </fieldset>
+          </form>
+          <br>
+          <form id="loadSymbol" name="loadSymbol">
+              <fieldset name="symbolsFieldSet">
+              <legend>Symbols</legend>
+              <span class="etlelem">Symbols Data:<input id="symbolsFile" type="file" name="symbolsFile"></span>
+              <span class="etlelem"><button id="symbols_data" type="button" name="symbols_data" onclick="loadSymbols()">Load Symbols</button></span>
+              </fieldset>
+          </form>    
+    </body>
+</html>

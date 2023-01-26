@@ -1,0 +1,89 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Economics Analytics</title>
+</head>
+<body>
+<script type="text/javascript">
+    function getEconomicData()
+    {
+        var selectedEconData = document.getElementById("economicData").value;
+        var startYear = document.getElementById("startYearInput").value;
+        var endYear = document.getElementById("endYearInput").value;
+        var country = document.getElementById("countryInput").value;
+        
+        var query = "startYear="+startYear + "&endYear=" + endYear + "&country=" + country;
+        fetch(`https://localhost:7116/Economics/${selectedEconData}Data?dataType=${selectedEconData}&startYear=${startYear}&endYear=${endYear}&country=${country}`).then(response => response.json())
+        .then(item => {    
+             item.forEach(x=>{
+                 var table = document.getElementById("EconomicDataTable");
+                 var tableRow = document.createElement("tr");
+                 table.append(tableRow);
+                 var tableData1 = document.createElement("td");
+                 tableData1.innerText = x.date;
+                 var tableData2 = document.createElement("td");
+                 tableData2.innerText = x.value;
+                 tableRow.append(tableData1);
+                 tableRow.append(tableData2);
+             });
+        });
+    }
+</script>
+
+    <form class="economicFormDisplay">
+        <legend>Economic Data</legend>
+        <br>
+        <label for="economicData">Economic Data Type</label>
+        <br>
+        <input list="economicList" id="economicData" name="economicData" required>
+        <datalist name="economicList" id="economicList">
+        <option value="GDP">GDP</option>
+        <option value="GNP">GNP</option>
+        <option value="Unemployment">Unemployment</option>
+        <option value="InterestRate">InterestRate</option>
+        </datalist>
+        <br>
+        <label for="startYearInput">Start Year</label>
+        <br>
+        <input id="startYearInput" list="startYear" name="startYearInput" required/>
+        <datalist name="startYear" id="startYear">
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+        </datalist>
+        <br>
+        <label for="endYearInput">End Year</label>
+        <br>
+        <input id="endYearInput" list="endYear" name="endYearInput" required/>
+        <datalist name="endYear" id="endYear">
+        <option value="2023">2023</option>
+        <option value="2022">2022</option>
+        <option value="2021">2021</option>
+        <option value="2020">2020</option>
+        </datalist>
+        <br>
+        <label for="countryInput">Country</label>
+        <br>
+        <input id="countryInput" list="country" name="countryInput" required/>
+        <datalist name="country" id="country">
+        <option value="United States">United States</option>
+        <option value="China">China</option>
+        <option value="India">India</option>
+        <option value="United Kingdom">United Kingdom</option>
+        </datalist>
+        <br>
+        <br>
+        <button type="button" id="Submit" onclick="getEconomicData()" name="Submit">Submit</button>
+    </form>
+    <br>
+   
+    <table id="EconomicDataTable" >
+        <tr>
+            <th>Year</th>
+            <th>Value</th>
+        </tr>
+    </table>
+</body>
+</html>

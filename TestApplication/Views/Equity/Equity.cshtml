@@ -1,0 +1,159 @@
+﻿@{
+    ViewData["Title"] = "Equity Page";
+}
+
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Equity Page</title>
+        <meta charset='UTF-8'>
+        <link rel="stylesheet" type="text/css"  href="~/css/site.css">
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" asp-append-version="true"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap-multiselect.js" asp-append-version="true"></script>
+        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap-multiselect.css" type="text/css"/>
+
+        <script type="text/javascript">
+
+        $(document).ready(function() {
+            $('select').multiselect();
+        });
+            
+         function populateSelections()
+            {
+                
+                fetch("https://localhost:7116/etl/getcompanies")
+                    .then(res => res.json()).then( companies => {
+
+                       companies.forEach(x => {
+                            var companyNameList = document.getElementById('CompanyNameList');
+                            var option = document.createElement('option');
+                            option.text = x['symbol'] + " " + x["companyName"];
+                            option.value = x['symbol'];
+                            companyNameList.append(option);
+                        });
+                    });
+
+                fetch("https://localhost:7116/etl/getFinancialStatements")
+                .then(res => res.json()).then(statements =>{
+                    statements.forEach(x =>{
+                        financialDetails = document.getElementById("FinancialDetails");
+                        var option = document.createElement("option");
+                        option.text = x['statementName'];
+                        option.value = x['statementName']; 
+                        financialDetails.append(option);
+                    });
+                }); 
+
+                 
+            }
+        </script>
+    </head>
+    <body onload="populateSelections()">
+        <script type="text/javascript" >
+        
+               
+
+            const targetNode = document.getElementById("iframeid").contentWindow.document.getElementsByTagName("body")[0];
+            const config = {attributes: true, childList: true, subtree: true};
+            function parseData()
+            {
+                var stockDetailsDisplay = document.getElementById('stockDetailsDisplay');
+                if(stockDetailsDisplay !== null)
+                {
+                    stockDetailsDisplay.remove();
+                }
+
+
+                
+                var iframe = document.getElementById("iframeid").contentWindow.document;
+                var text = iframe.getElementsByTagName("pre")[0];
+                preText = text.innerText;
+                var obj = JSON.parse(preText);
+                var industry = document.forms.stockDetails.elements.includeIndustry;
+                arrayKeys = {};
+                obj.forEach(x => {
+                    Object.keys(x).forEach( z => 
+                    {
+                        console.log(z);
+                        if((x[z] !== null) && (Object.keys(x[z]).length > 0))
+                        {
+                            Object.keys(x[z]).forEach(y => {
+                                if(x[z][y] !== null)
+                                {
+                                    arrayKeys[y] = x[z][y]; 
+                                }
+                            });
+                        }
+                        arrayKeys[z] = x[z]; 
+                    });
+                    var div = document.createElement("div");
+                    var id = "singleEquityDisplay" + arrayKeys["symbol"];
+                    div.setAttribute("id", id);
+                    div.setAttribute("class", "singleEquityDisplay");
+                    Object.keys(arrayKeys).forEach(x => {
+                        var paragraph = document.createElement("p");
+                        var parText = document.createTextNode(x + ": " + arrayKeys[x]);
+                        paragraph.appendChild(parText);
+                        div.appendChild(paragraph);
+                    });
+                    document.getElementById("stockDisplay").appendChild(div);
+                    arrayKeys = {};
+                });
+                text.remove();
+            }
+
+      
+        </script>
+        <div id="equityEntryForm">
+            <form id="stockDetails" target="sample_iframe">
+
+                <legend>Stock Details</legend>
+              
+
+                <label>Company Name:</label>
+                <input list="CompanyNameList" id="CompanyName" name="CompanyName"/>
+                <datalist  id="CompanyNameList" name="CompanyNameList" multiple="multiple">
+                </datalist><br><br>
+
+                <label>Financial Details:</label>
+                <input list="FinancialDetails" name="FinancialDetails" multiple>
+                <datalist id="FinancialDetails" name="FinancialDetails">
+                </datalist><br><br>
+
+
+                <label>Report Type:</label>
+                <label for="annual">Annual<input type="radio" name="period" id="period" value="annual"></label>
+                <label for="quarter">Quarterly<input type="radio" name="period" id="period" value="quarterly"></label>
+                <br><br>
+
+                <label for="DateOfEntry">Date<input type="date" id ="DateOfEntry" name="DateOfEntry"></label>
+                <br><br>
+
+                <label>Industry Analysis:</label>
+                <label for="includeIndustry">Include<input type="radio" name="includeIndustry" id="includeIndustry" value="include"></label>
+                <label for="dontIncludeIndustry">Don't Include<input type="radio" name="includeIndustry" id="includeIndustry" value = "dont include"></label>
+                <br><br>
+                <input type="submit" formaction="https://localhost:7116/Equity/stockData" formmethod="GET">
+                <br><br>
+            </form>
+            <iframe style="width:100%;height:30%;border:solid 2px gray;" id="iframeid" name="sample_iframe" >
+              
+            </iframe>
+            <br>
+            <button id="button" name="parseData" value="Parse Stock Data" onclick="parseData()">Parse Stock Data</button>
+        </div> 
+        <div id="stockDetailsDisplay">
+        </div>
+        <br>
+    <div id="stockDisplay" style="display:flex;">
+
+    <div id="industryDisplay" >
+      
+    </div>
+    </div>
+    </body>
+</html>

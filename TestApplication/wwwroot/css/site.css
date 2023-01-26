@@ -1,0 +1,94 @@
+@import url('site.css');
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+  margin-bottom: 60px;
+  font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+th {
+    border: solid;
+    border-width: 2px;
+    border-color: gray;
+    margin: 4px;
+    padding: 2px;
+}
+
+td {
+    border: solid;
+    border-width: 2px;
+    border-color: gray;
+    margin: 4px;
+    padding: 2px;
+}
+
+tr {
+    border: solid;
+    border-width: 2px;
+    border-color:gray;
+    margin: 4px; 
+    padding: 2px; 
+}
+
+fieldset {
+    border: solid;
+    border-width: 3px;
+    border-color:gray;
+    border-spacing:5px;
+    padding: 5px;
+    font-size:10px;
+}
+
+legend {
+    font-size: 15px;
+    font-weight:bold;
+}
+
+span {
+    font-size:10px;
+    padding:5px;
+    margin:5px;
+}
+
+.singleEquityDisplay {
+    border-width: 5px;
+    border: solid;
+    border-color: gray;
+    border-spacing: 5px;
+    padding: 5px;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    font-size: 10px;
+    width:50%;
+    margin:5px;
+}
+
+.economicFormDisplay {
+    border-width:2px; 
+    border-style: solid;
+    border-color:gray;
+    padding: 5px; 
+    width: 50%; 
+    margin: 5px; 
+}
+
+.analyticsModelFormDisplay {
+    border: solid; 
+    border-color: gray; 
+    border-width: 2px; 
+    margin: 5px; 
+    padding: 5px; 
+    width: 100%; 
+}

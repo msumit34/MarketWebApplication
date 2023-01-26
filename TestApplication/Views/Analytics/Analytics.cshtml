@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Analytics</title>
+    <script type="text/javascript">
+        function loadSelectList()
+        {
+            try
+            {
+                fetch("https://localhost:7116/ETL/getFinancialStatements")
+                .then(res => res.json())
+                .then(items =>{
+                    items.forEach(x=>{  
+                    console.log(x);
+                    var datasetList = document.getElementById('datasetList');
+                    var option = document.createElement('option');
+                        option.value = x.statementName;
+                        datasetList.appendChild(option);
+                    });
+                });
+            }
+            catch(e)
+            {
+                console.log(e);
+            }
+        }
+    </script>
+</head>
+<body onload="loadSelectList()">
+    <script type="text/javascript">
+        function updateParameterList()
+        {
+            try
+            {
+                var dataType = document.getElementById('dataset').value;
+                var dependentVariableList = document.getElementById('DependentVariableList');
+                var independentVariableList = document.getElementById('IndependentVariableList');
+                fetch(`https://localhost:7116/ETL/getVariableList?dataType=${dataType}`).then(res => res.json()).then(properties =>{
+                            for(var i = 0; i < properties.length; i++)
+                            {
+                                var optionDVar = document.createElement('option');
+                                optionDVar.value = properties[i];
+                                dependentVariableList.appendChild(optionDVar);
+
+                                var optionIVar = document.createElement('option');
+                                optionIVar.value = properties[i];
+                                independentVariableList.appendChild(optionIVar);
+                            }
+                });
+            }
+            catch(e)
+            {
+                console.log(e);
+            }
+        }
+      
+       /** 
+        function removeMatchingDependentVariable()
+        {
+            try
+            {
+                var selectedValue = document.getElementById('IndependentVariables').value;
+                var dependentVariableList = document.getElementById('DependentVariableList');
+                var childList = dependentVariableList.children;
+                for(var x = 0; x < childList.length; x++)
+                {
+                    if(childList[x].value == "Test Value")
+                    {
+                        //childList[x].hidden = false;
+                    }
+                    else
+                    {
+                        //childList[x].hidden = false;
+                    }
+                
+            }
+            catch(e)
+            {
+                console.log(e);
+            }
+        }*/
+
+
+        function getDataSetInfo()
+        {
+            try
+            {
+                var dataset = document.getElementById('dataset').value;
+                fetch(`https://localhost:7116/Analytics/DataSetInfo?dataType=${dataset}`).then(response => response.json()).then(info=>{
+                    console.log(info);
+                });
+            }
+            catch(e)
+            {
+                console.log(e);
+            }
+        }
+    </script>
+    <form class="analyticsModelFormDisplay">
+        <legend>Analytics Model</legend>
+        <span>
+        <label for="ModelList">Model Type</label>
+        <input list="ModelType" name="ModelList" id="ModelList">
+        <datalist id="ModelType" name="ModelType">
+            <option value="Linear Regression">Linear Regression</option>
+            <option value="K Means Clustering">K Means Clustering</option>
+            <option value="Sentiment Analysis">Sentiment Analysis</option>
+        </datalist>
+        <br><br>
+        <label for="dataset"> Dataset </label>
+        <input list="datasetList" id="dataset" name="dataset" onchange="updateParameterList()"/>
+        <datalist id="datasetList" name="datasetList">            
+        </datalist>
+        
+        <label for="DependentVariables">Dependent Variables</label>
+        <input list="DependentVariableList" name="DependentVariables" id="DependentVariables">
+        <datalist id="DependentVariableList" name="DependentVariableList">
+        </datalist>
+        <br><br>
+        <label for="IndependentVariables"> Independent Variables</label>
+        <input list="IndependentVariableList" name="IndependentVariables" id="IndependentVariables" onchange="removeMatchingDependentVariable()">
+        <datalist id="IndependentVariableList" name="IndependentVariableList">
+        </datalist>
+        
+        <label for="partition">Model Training/Test Partition</label>
+        <input type="text" name="partition" id="partition">
+        </span>
+        <br>
+        <br>
+
+        <button type="button" onclick="getDataSetInfo()" id="Submit" name="submit">Submit</button>
+    </form>
+    <br>
+    <br>
+    <label for="dataSetTable">Data Set</label>
+    <table id="dataSetTable" name="dataSetTable">
+
+
+    </table>
+</body>
+</html>
