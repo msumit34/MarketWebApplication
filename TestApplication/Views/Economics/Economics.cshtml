@@ -14,7 +14,7 @@
         var country = document.getElementById("countryInput").value;
         
         var query = "startYear="+startYear + "&endYear=" + endYear + "&country=" + country;
-        fetch(`https://localhost:7116/Economics/${selectedEconData}Data?dataType=${selectedEconData}&startYear=${startYear}&endYear=${endYear}&country=${country}`).then(response => response.json())
+        fetch(`https://{localhost}/Economics/${selectedEconData}Data?dataType=${selectedEconData}&startYear=${startYear}&endYear=${endYear}&country=${country}`).then(response => response.json())
         .then(item => {    
              item.forEach(x=>{
                  var table = document.getElementById("EconomicDataTable");
