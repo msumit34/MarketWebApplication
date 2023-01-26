@@ -25,7 +25,7 @@
          function populateSelections()
             {
                 
-                fetch("https://localhost:7116/etl/getcompanies")
+                fetch("https://{localhost}/etl/getcompanies")
                     .then(res => res.json()).then( companies => {
 
                        companies.forEach(x => {
@@ -37,7 +37,7 @@
                         });
                     });
 
-                fetch("https://localhost:7116/etl/getFinancialStatements")
+                fetch("https://{localhost}/etl/getFinancialStatements")
                 .then(res => res.json()).then(statements =>{
                     statements.forEach(x =>{
                         financialDetails = document.getElementById("FinancialDetails");
