@@ -11,7 +11,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/getsymbols")
+                    fetch("https://{localhost}/etl/getsymbols")
                         .then(res => res.json())
                         .then(data => console.log(data)); 
                 }
@@ -25,7 +25,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/etlview")
+                    fetch("https://{localhost}/etl/etlview")
                         .then(res => res.json())
                         .then(data => this.etl.industry = data);
                 }
@@ -39,7 +39,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/etlview")
+                    fetch("https://{localhost}/etl/etlview")
                         .then(res => res.json())
                         .then(data => this.etl.sector = data);
                 }   
@@ -53,7 +53,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/getcompanies")
+                    fetch("https://{localhost}/etl/getcompanies")
                         .then(res => res.json())
                 }
                 catch(e)
@@ -66,7 +66,7 @@
             {
                 try
                 {
-                    fetch('https://localhost:7116/etl/loadTechnicalData', {
+                    fetch('https://{localhost}/etl/loadTechnicalData', {
                         method:'POST',
                         headers:{
                             'Accept':'application/json', 
@@ -87,7 +87,7 @@
             {
                 try
                 {
-                    fetch('https://localhost:7116/etl/loadGrowthData', {
+                    fetch('https://{localhost}/etl/loadGrowthData', {
                         method: 'POST', 
                         headers:{
                             'Accept':'application/json', 
@@ -108,7 +108,7 @@
             {
                 try
                 {
-                    fetch('https://localhost:7116/etl/loadGrowthData', {
+                    fetch('https://{localhost}/etl/loadGrowthData', {
                         method:'POST', 
                         headers:{
                             'Accept': 'application/json', 
@@ -131,7 +131,7 @@
                 {
                     let data = document.getElementById("technicalDataBtn").files[0];
                  
-                    fetch('https://localhost:7116/ETL/loadTechnicalData',{
+                    fetch('https://{localhost}/ETL/loadTechnicalData',{
                         method:'POST',
                         mode:"cors",
                         headers:{
