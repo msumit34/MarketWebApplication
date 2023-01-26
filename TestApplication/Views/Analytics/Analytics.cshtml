@@ -8,7 +8,7 @@
         {
             try
             {
-                fetch("https://localhost:7116/ETL/getFinancialStatements")
+                fetch("https://{localhost}/ETL/getFinancialStatements")
                 .then(res => res.json())
                 .then(items =>{
                     items.forEach(x=>{  
