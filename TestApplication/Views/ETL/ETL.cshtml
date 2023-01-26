@@ -13,7 +13,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/getsymbols")
+                    fetch("https://{localhost}/etl/getsymbols")
                         .then(res => res.json())
                         .then(data => console.log(data)); 
                 }
@@ -27,7 +27,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/etlview")
+                    fetch("https://{localhost}/etl/etlview")
                         .then(res => res.json())
                         .then(data => this.etl.industry = data);
                 }
@@ -41,7 +41,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/etlview")
+                    fetch("https://{localhost}/etl/etlview")
                         .then(res => res.json())
                         .then(data => this.etl.sector = data);
                 }   
@@ -55,7 +55,7 @@
             {
                 try
                 {
-                    fetch("https://localhost:7116/etl/getcompanies")
+                    fetch("https://{localhost}/etl/getcompanies")
                         .then(res => res.json())
                 }
                 catch(e)
@@ -82,7 +82,7 @@
                            return values;
                        });
 
-                        fetch('https://localhost:7116/ETL/loadRatingsData',{
+                        fetch('https://{localhost}/ETL/loadRatingsData',{
                         method:'POST',
                         headers:{
                             'Content-Type': 'application/json',
@@ -119,7 +119,7 @@
                            return values;
                        });
 
-                        fetch('https://localhost:7116/ETL/loadFinancialRatiosData',{
+                        fetch('https://{localhost}/ETL/loadFinancialRatiosData',{
                         method:'POST',
                         headers:{
                             'Content-Type': 'application/json',
@@ -158,7 +158,7 @@
                            return values;
                        });
 
-                        fetch('https://localhost:7116/ETL/loadGrowthData',{
+                        fetch('https://{localhost}/ETL/loadGrowthData',{
                         method:'POST',
                         headers:{
                             'Content-Type': 'application/json',
@@ -195,7 +195,7 @@
                            return values;
                        });
 
-                        fetch('https://localhost:7116/ETL/loadTechnicalData',{
+                        fetch('https://{localhost}/ETL/loadTechnicalData',{
                         method:'POST',
                         headers:{
                             'Content-Type': 'application/json',
@@ -231,7 +231,7 @@
                             return values;
                         });
 
-                    fetch('https://localhost:7116/ETL/loadSymbols', {
+                    fetch('https://{localhost}/ETL/loadSymbols', {
                             method: 'POST', 
                             headers:{
                                 'Content-Type':'application/json',
@@ -263,7 +263,7 @@
                             var values = row.split(",");
                             return values;
                         }); 
-                        fetch(`https://localhost:7116/ETL/EconomicData?dataType=${econDataType}`, {
+                        fetch(`https://{localhost}/ETL/EconomicData?dataType=${econDataType}`, {
                             method: 'POST',
                             headers:{
                                 'Content-Type': 'application/json', 
