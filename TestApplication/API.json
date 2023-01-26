@@ -1,4 +1,4 @@
 {
     "cosmos_db_endpoint": "https://cosmosdbsecuritiesdb.documents.azure.com:443/",
-    "cosmos_db_api_key": 
+    "cosmos_db_api_key": ""
 }
