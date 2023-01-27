@@ -1,4 +1,4 @@
-﻿using Microsoft.Spark;
+using Microsoft.Spark;
 using Microsoft.Spark.Sql;
 using Microsoft.Spark.ML;
 using Microsoft.ML;
@@ -16,6 +16,11 @@ using FastMember;
 using System.Collections.Generic;
 using Microsoft.Net.Http.Headers;
 using System.Collections;
+using Microsoft.Identity.Client;
+using TestApplication.Models;
+using System.Linq;
+using Microsoft.Azure.Cosmos.Serialization.HybridRow;
+using System.Numerics;
 
 namespace TestApplication
 {
@@ -29,7 +34,7 @@ namespace TestApplication
 
         private List<DataFrame> frames { get; set; }
 
-        public ModelObject dataView { get; set; }
+        public IDataView dataView { get; set; }
 
         private MLContext mlContext { get; set; }
 
@@ -52,7 +57,7 @@ namespace TestApplication
                 this.session = SparkSession.Builder().AppName("Market Analytics Pipeline").GetOrCreate();
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
@@ -106,14 +111,14 @@ namespace TestApplication
                     {
                         this.frame = frame;
                     }
-                    else 
+                    else
                     {
                         this.frame = this.frame.Join(frame, "Symbol");
                     }
                 }
                 this.frame.Collect();
                 this.columns = this.frame.Columns();
-                return true; 
+                return true;
             }
             catch (Exception ex)
             {
@@ -163,7 +168,7 @@ namespace TestApplication
         {
             try
             {
-                switch(op)
+                switch (op)
                 {
                     case "<=":
                         this.frame = this.frame.Filter(this.frame.Col(column) <= value);
@@ -252,13 +257,59 @@ namespace TestApplication
         public async Task<bool> CreateDataViewForMLContext<T>()
         {
             try
-            {       
-                var result = await this.database.cosmosClient.GetItemsFromCosmosDB<T>("SELECT * FROM c");
+            {
+                dynamic result = null;
+                string name = typeof(T).Name;
+                switch (name)
+                {
+                    case "FinancialRatiosBarChart":
+                        var resFinance = await this.database.cosmosClient.GetItemsFromCosmosDB<FinancialRatiosBarChart>("SELECT * FROM c");
+                        result = resFinance.ToArray();
+                        break;
+                    case "GrowthBarChart":
+                        var resGrowth = await this.database.cosmosClient.GetItemsFromCosmosDB<GrowthBarChart>("SELECT * FROM c");
+                        result = resGrowth.ToArray();
+                        break;
+                    case "RatingsBarChart":
+                        var resRating = await this.database.cosmosClient.GetItemsFromCosmosDB<RatingsBarChart>("SELECT * FROM c");
+                        result = resRating.ToArray();
+                        break;
+                    case "TechnicalIndicatorsBarChart":
+                        var resTechnical = await this.database.cosmosClient.GetItemsFromCosmosDB<RatingsBarChart>("SELECT * FROM c");
+                        result = resTechnical.ToArray();
+                        break;
+                    default:
+                        break;
+                }
                 PropertyInfo[] properties = result[0].GetType().GetProperties();
-                this.dataView = new ModelObject(result, typeof(T).GetProperties());
+                var builder = new DataViewSchema.Builder();
+                foreach (var prop in properties)
+                {
+                    if (prop.PropertyType.Name.Equals("String"))
+                        continue;
+                    if (prop.Name.Contains("IsMissing") || prop.Name.Contains("Replace") || prop.Name.Contains("Normalize"))
+                    {
+                        builder.AddColumn(prop.Name, BooleanDataViewType.Instance);
+                        continue;
+                    }
+
+                    switch (prop.PropertyType.Name)
+                    {
+                        case "Integer":
+                            builder.AddColumn(prop.Name, NumberDataViewType.Int32);
+                            break;
+                        case "Double":
+                            builder.AddColumn(prop.Name, NumberDataViewType.Double);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                var schema = builder.ToSchema();
+                this.dataView = mlContext.Data.LoadFromEnumerable(result, schema);
                 return true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
@@ -266,33 +317,52 @@ namespace TestApplication
             return false;
         }
 
-        public ModelObject PrepareDataSetForMLContext(PropertyInfo[] columns)
+        public IDataView PrepareDataSetForMLContext(PropertyInfo[] columns)
         {
             try
             {
+
                 columns = columns.Where(x => !x.PropertyType.Name.Equals("String")).ToArray<PropertyInfo>();
                 int dataSetRowCount = (int)this.dataView.GetRowCount();
                 List<string> nullColumns = new List<string>();
                 IDataView transformedData = null;
                 foreach (var col in this.dataView.Schema)
                 {
-                    //MissingValueIndicatorEstimator indicatorEstimator = this.mlContext.Transforms.IndicateMissingValues($"IsNull{col.Name}", col.Name);
-                    //MissingValueIndicatorTransformer missingValueTransFormer = indicatorEstimator.Fit(this.dataView);
-                    //transformedData = missingValueTransFormer.Transform((IDataView)this.dataView);
-                    //var column = transformedData.GetColumn<Boolean>($"IsNull{col.Name}");
-                    var replacementEstimator = this.mlContext.Transforms.ReplaceMissingValues($"Replaced{col.Name}", col.Name, replacementMode: Microsoft.ML.Transforms.MissingValueReplacingEstimator.ReplacementMode.Mean);
-                    ITransformer replacementTransformer = replacementEstimator.Fit((IDataView)this.dataView);
-                    transformedData = replacementTransformer.Transform(this.dataView);
+                    if (col.Type.RawType.Name.Equals("Double"))
+                    {
+                        MissingValueIndicatorEstimator indicatorEstimator = this.mlContext.Transforms.IndicateMissingValues($"IsMissing{col.Name}", col.Name);
+                        MissingValueIndicatorTransformer missingValueTransFormer = indicatorEstimator.Fit(this.dataView);
+                        transformedData = missingValueTransFormer.Transform((IDataView)this.dataView);
+                        var column = transformedData.GetColumn<bool>($"IsMissing{col.Name}");
+                        var rowCount = column.Count();
+                        var MissingList = column.ToList<bool>();
+                        var nullCount = MissingList.Where(x => x.Equals(true)).Count();
+                        if (((nullCount / rowCount) * 100) > 30)
+                        {
+                            nullColumns.Add(col.Name);
+                        }
+                        else
+                        {
+                            var replacementEstimator = this.mlContext.Transforms.ReplaceMissingValues($"Replace{col.Name}", col.Name, replacementMode: Microsoft.ML.Transforms.MissingValueReplacingEstimator.ReplacementMode.Mean);
+                            ITransformer replacementTransformer = replacementEstimator.Fit((IDataView)transformedData);
+                            transformedData = replacementTransformer.Transform(transformedData);
+                        }
+                    }
                 }
-                var dropColumnEstimator = this.mlContext.Transforms.DropColumns(nullColumns.ToArray());
-                var dropColumnTransformer = dropColumnEstimator.Fit((IDataView)transformedData);
-                this.dataView = (ModelObject)dropColumnTransformer.Transform((IDataView)transformedData);
-                var modelColumns = columns.Select(x => x.Name).Except(nullColumns).ToArray<string>();
-                foreach (var col in modelColumns)
+                if (nullColumns.Count() > 0)
                 {
-                    var normalizeEstimator = this.mlContext.Transforms.NormalizeMinMax("normalized" + col, col);
-                    var normalizingTransformer = normalizeEstimator.Fit((IDataView)transformedData);
-                    this.dataView = (ModelObject)normalizingTransformer.Transform((IDataView)transformedData);
+                    var dropColumnEstimator = this.mlContext.Transforms.DropColumns(nullColumns.ToArray());
+                    var dropColumnTransformer = dropColumnEstimator.Fit((IDataView)transformedData);
+                    transformedData = dropColumnTransformer.Transform((IDataView)transformedData);
+                }
+                foreach (var col in this.dataView.Schema)
+                {
+                    if (col.Type.RawType.Name.Equals("Double"))
+                    {
+                        var normalizeEstimator = this.mlContext.Transforms.NormalizeMinMax("Normalize" + col.Name, col.Name);
+                        var normalizingTransformer = normalizeEstimator.Fit((IDataView)transformedData);
+                        this.dataView = normalizingTransformer.Transform((IDataView)transformedData);
+                    }
                 }
                 return this.dataView;
             }
@@ -303,17 +373,32 @@ namespace TestApplication
 
             return null;
         }
-         
-        public RegressionMetrics RunLinearRegression(string dependentVariable, string[] independentVariable, int[] partition)
+
+        public RegressionMetrics RunLinearRegression(string dependentVariable, string[] independentVariable, double partition)
         {
             try
             {
-                this.dataCleaningForNulls();
-                MLContext mlContext = new MLContext();
-                SdcaRegressionTrainer trainer = mlContext.Regression.Trainers.Sdca();
-                var trainedModel = trainer.Fit((IDataView)this.dataView);
-                IDataView predictions = trainedModel.Transform((IDataView)this.dataView);
-                RegressionMetrics trainedModelMetrics = this.mlContext.Regression.Evaluate(predictions);
+
+                var featureColumns = this.dataView.Schema.Where(x => x.Type.RawType.Name.Equals("Double")).Select(x => x.Name).ToArray<string>();
+                foreach (var col in featureColumns)
+                {
+                    var pipeline = this.mlContext.Transforms.Conversion.ConvertType(col, col, DataKind.Single);
+                    this.dataView = pipeline.Fit(this.dataView).Transform(this.dataView);
+                }
+                DataOperationsCatalog.TrainTestData dataSplit = this.mlContext.Data.TrainTestSplit(this.dataView, 0.3);
+                IDataView trainData = dataSplit.TrainSet;
+                IDataView testData = dataSplit.TestSet;
+                IEstimator<ITransformer> dataPrepEstimator = this.mlContext.Transforms.Concatenate("Features", featureColumns);
+                ITransformer trainingModelTransformer = dataPrepEstimator.Fit(trainData);
+                SdcaRegressionTrainer sdcaTrainer = this.mlContext.Regression.Trainers.Sdca(labelColumnName: dependentVariable, featureColumnName: "Features");
+                var trainedModel = sdcaTrainer.Fit(trainingModelTransformer.Transform(trainData));
+                var trainedModelParameters = trainedModel.Model as LinearRegressionModelParameters;
+                //test training data
+                IDataView transformedTestData = trainingModelTransformer.Transform(testData);
+                IDataView testDataPredictions = trainedModel.Transform(transformedTestData);
+                RegressionMetrics trainedModelMetrics = this.mlContext.Regression.Evaluate(testDataPredictions);
+                Console.WriteLine(trainedModelMetrics.RootMeanSquaredError);
+                Console.WriteLine(trainedModelMetrics.RSquared);
                 return trainedModelMetrics;
             }
             catch (Exception ex)
@@ -323,14 +408,20 @@ namespace TestApplication
             return null;
         }
 
-        public KMeansClusteringModel RunKMeansClusteringModel(string[] features, int numberOfClusters)
+        public KMeansClusteringModel RunKMeansClusteringModel(string featureColumnName, int numberOfClusters)
         {
             try
             {
-                MLContext mlContext = new MLContext();
-                KMeansTrainer trainer = mlContext.Clustering.Trainers.KMeans(features[0], null, numberOfClusters);
-                trainer.Fit(null);
-                return new KMeansClusteringModel();
+            
+                string[] features = this.dataView.Schema.Where(x => x.Type.RawType.Name.Equals("Double")).Select(y => y.Name).ToArray();
+                IEstimator<ITransformer> dataPrepEstimator = this.mlContext.Transforms.Concatenate("Features", features);
+                IDataView kmeansModelData = dataPrepEstimator.Fit(this.dataView).Transform(this.dataView);
+                DataOperationsCatalog.TrainTestData dataSplit = this.mlContext.Data.TrainTestSplit(kmeansModelData, 0.3);
+                IDataView trainData = dataSplit.TrainSet;
+                IDataView testData = dataSplit.TestSet;
+                KMeansTrainer trainer = this.mlContext.Clustering.Trainers.KMeans(featureColumnName, null, numberOfClusters);
+                var modelData = trainer.Fit(trainData).Transform(testData);
+                var metrics = this.mlContext.Clustering.Evaluate(modelData, "Label", "Score", "Features");
             }
             catch (Exception ex)
             {
@@ -339,161 +430,7 @@ namespace TestApplication
             }
             return new KMeansClusteringModel();
         }
-    }
-
-
-    public class ModelObject : IDataView
-    {
-        public bool CanShuffle => false;
-
-        public DataViewSchema Schema { get; }
-        public IEnumerable _data { get; }
-
-        public ModelObject()
-        {
-
-        }
-
-        public ModelObject(IEnumerable data, PropertyInfo[] props)
-        {
-            var builder = new DataViewSchema.Builder();
-            this._data = data;
-            PropertyInfo[] properties = props;
-            foreach (var prop in properties)
-            {
-                if (prop.PropertyType.Name.Equals("String"))
-                    continue;
-                switch (prop.PropertyType.Name)
-                {
-                    case "Integer":
-                        builder.AddColumn(prop.Name, NumberDataViewType.Int32);
-                        builder.AddColumn($"Replaced{prop.Name}", NumberDataViewType.Int32);
-                        break;
-                    case "Double":
-                        builder.AddColumn(prop.Name, NumberDataViewType.Double);
-                        builder.AddColumn($"Replaced{prop.Name}", NumberDataViewType.Double);
-                        break;
-                    default:
-                        break;
-                }
-            }
-            this.Schema = builder.ToSchema();
-        }
-
-        public long? GetRowCount()
-        {
-            long value = 0;
-            if (_data == null)
-                return 0;
-            IEnumerator enumerator = _data.GetEnumerator();
-            while (enumerator.MoveNext())
-            {
-                value = value + 1;
-            }
-            return value;
-        }
-
-        public DataViewRowCursor GetRowCursor(IEnumerable<DataViewSchema.Column> columnsNeeded, Random rand = null)
-        {
-            try
-            {
-                return new Cursor(this);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
-            return null;
-        }
-
-        public DataViewRowCursor[] GetRowCursorSet(IEnumerable<DataViewSchema.Column> columnsNeeded, int n, Random rand = null)
-        {
-            try
-            {
-                return new[] { GetRowCursor(columnsNeeded, rand) };
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
-            return null;
-        }
-
-        private sealed class Cursor : DataViewRowCursor
-        {
-            private bool _disposed;
-            private long _position;
-            private readonly IEnumerator<ModelObject> _enumerator;
-            private Delegate _getters =()=> { Console.WriteLine("Test"); };
-
-            public override long Position => _position;
-            public override long Batch => 0;
-            public override DataViewSchema Schema { get; }
-            public ModelObject ModelObject { get; }
-
-            public Cursor(IEnumerator<ModelObject> parent)
-            {
-                Schema = parent.Current.Schema;
-                _position = -1;
-                _enumerator = parent;
-
-            }
-            public Cursor(ModelObject modelObject)
-            {
-                ModelObject = modelObject;
-                Schema = modelObject.Schema;
-                _position = -1;
-                IEnumerable<ModelObject> enummerable = new List<ModelObject>() { modelObject };
-                _enumerator = enummerable.GetEnumerator();
-                this._getters = (string columnName) => { Console.WriteLine("text"); };
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if (_disposed)
-                    return;
-                if (disposing)
-                {
-                    _enumerator.Dispose();
-                    _position = -1;
-                }
-                _disposed = true;
-                base.Dispose(disposing);
-            }
-
-
-            public override ValueGetter<TValue> GetGetter<TValue>(
-                DataViewSchema.Column column)
-
-            {
-                if (!IsColumnActive(column))
-                    throw new ArgumentOutOfRangeException(nameof(column));
-                return (ValueGetter<TValue>)_getters;
-            }
-
-            public override bool IsColumnActive(DataViewSchema.Column column)
-                => ModelObject.GetColumn<dynamic>(column) != null;
-
-            public override bool MoveNext()
-            {
-                if (_disposed)
-                    return false;
-                if (_enumerator.MoveNext())
-                {
-                    _position++;
-                    return true;
-                }
-                Dispose();
-                return false;
-            }
-
-            public override ValueGetter<DataViewRowId> GetIdGetter()
-            {
-                throw new NotImplementedException();
-            }
-        }
+    
     }
 }
 
